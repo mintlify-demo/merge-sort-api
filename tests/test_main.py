@@ -3,7 +3,9 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from main import app, quick_sort
+import pytest
+
+from main import app, heap_sort, merge_sort, quick_sort
 
 client = TestClient(app)
 
@@ -19,7 +21,7 @@ def test_quick_sort_function():
 def test_sort_ascending_by_default():
     r = client.post("/sort", json={"numbers": [5, 2, 9, 1, 5, 6]})
     assert r.status_code == 200
-    assert r.json() == {"result": [1, 2, 5, 5, 6, 9], "count": 6, "order": "asc"}
+    assert r.json() == {"result": [1, 2, 5, 5, 6, 9], "count": 6, "order": "asc", "algorithm": "quick"}
 
 
 def test_sort_descending():
@@ -67,3 +69,23 @@ def test_committed_openapi_spec_is_up_to_date():
     """If this fails, run `make spec` and commit docs/openapi.json."""
     committed = json.loads((Path(__file__).parent.parent / "docs" / "openapi.json").read_text())
     assert committed == app.openapi()
+
+
+@pytest.mark.parametrize("fn", [quick_sort, merge_sort, heap_sort])
+def test_every_algorithm_sorts(fn):
+    assert fn([5, 2, 9, 1, 5]) == [1, 2, 5, 5, 9]
+    assert fn([5, 2, 9, 1, 5], descending=True) == [9, 5, 5, 2, 1]
+    assert fn([]) == []
+
+
+@pytest.mark.parametrize("algorithm", ["quick", "merge", "heap"])
+def test_sort_with_algorithm(algorithm):
+    r = client.post("/sort", json={"numbers": [3, 1, 2], "algorithm": algorithm})
+    assert r.status_code == 200
+    assert r.json()["result"] == [1, 2, 3]
+    assert r.json()["algorithm"] == algorithm
+
+
+def test_unknown_algorithm_is_rejected():
+    r = client.post("/sort", json={"numbers": [1], "algorithm": "bogo"})
+    assert r.status_code == 422

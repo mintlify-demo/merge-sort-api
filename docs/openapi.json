@@ -19,7 +19,7 @@
           "Sorting"
         ],
         "summary": "Sort numbers",
-        "description": "Sort a list of numbers in ascending or descending order.\n\nUses quick sort: O(n log n) on average, O(n^2) in the worst case. An empty\nlist is valid and returns an empty list.",
+        "description": "Sort a list of numbers in ascending or descending order.\n\nPick the algorithm with `algorithm`: `quick` (default, O(n log n) on\naverage), `merge` (stable, always O(n log n)), or `heap` (O(n log n),\nconstant extra memory). An empty list is valid and returns an empty list.",
         "operationId": "sortNumbers",
         "requestBody": {
           "content": {
@@ -100,6 +100,15 @@
   },
   "components": {
     "schemas": {
+      "Algorithm": {
+        "type": "string",
+        "enum": [
+          "quick",
+          "merge",
+          "heap"
+        ],
+        "title": "Algorithm"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -219,6 +228,14 @@
             "examples": [
               "asc"
             ]
+          },
+          "algorithm": {
+            "$ref": "#/components/schemas/Algorithm",
+            "description": "Which algorithm to use: `quick` (default), `merge` (stable), or `heap`. `/sort/steps` always uses `quick`.",
+            "default": "quick",
+            "examples": [
+              "quick"
+            ]
           }
         },
         "type": "object",
@@ -261,13 +278,21 @@
             "examples": [
               "asc"
             ]
+          },
+          "algorithm": {
+            "$ref": "#/components/schemas/Algorithm",
+            "description": "The algorithm that was used.",
+            "examples": [
+              "quick"
+            ]
           }
         },
         "type": "object",
         "required": [
           "result",
           "count",
-          "order"
+          "order",
+          "algorithm"
         ],
         "title": "SortResponse"
       },
@@ -306,6 +331,13 @@
               "asc"
             ]
           },
+          "algorithm": {
+            "$ref": "#/components/schemas/Algorithm",
+            "description": "The algorithm that was used.",
+            "examples": [
+              "quick"
+            ]
+          },
           "steps": {
             "items": {
               "$ref": "#/components/schemas/PartitionStep"
@@ -320,6 +352,7 @@
           "result",
           "count",
           "order",
+          "algorithm",
           "steps"
         ],
         "title": "SortStepsResponse"
