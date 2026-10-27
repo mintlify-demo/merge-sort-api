@@ -29,7 +29,7 @@
         "icon": "code",
         "openapi": {
           "source": "openapi.json",
-          "directory": "merge-sort-api/api-reference"
+          "directory": "api-reference"
         }
       }
     ]
