@@ -89,3 +89,15 @@ def test_sort_with_algorithm(algorithm):
 def test_unknown_algorithm_is_rejected():
     r = client.post("/sort", json={"numbers": [1], "algorithm": "bogo"})
     assert r.status_code == 422
+
+
+def test_stats_compares_every_algorithm():
+    r = client.post("/sort/stats", json={"numbers": [5, 2, 9, 1, 5, 6], "order": "desc"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["result"] == [9, 6, 5, 5, 2, 1]
+    assert body["count"] == 6
+    assert sorted(t["algorithm"] for t in body["timings"]) == ["heap", "merge", "quick"]
+    elapsed = [t["elapsed_ms"] for t in body["timings"]]
+    assert elapsed == sorted(elapsed)
+    assert body["fastest"] == body["timings"][0]["algorithm"]
