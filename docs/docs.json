@@ -12,17 +12,25 @@
       {
         "group": "Get started",
         "icon": "rocket",
-        "pages": ["index", "quickstart"]
+        "pages": [
+          "index",
+          "quickstart"
+        ]
       },
       {
         "group": "Guides",
         "icon": "book-open",
-        "pages": ["guides/how-it-works"]
+        "pages": [
+          "guides/how-it-works"
+        ]
       },
       {
         "group": "API reference",
         "icon": "code",
-        "openapi": "openapi.json"
+        "openapi": {
+          "source": "openapi.json",
+          "directory": "merge-sort-api/api-reference"
+        }
       }
     ]
   }
