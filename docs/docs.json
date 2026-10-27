@@ -1,0 +1,29 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Merge Sort API",
+  "colors": {
+    "primary": "#0D9373",
+    "light": "#55D799",
+    "dark": "#0D9373"
+  },
+  "navigation": {
+    "pages": [
+      {
+        "group": "Get started",
+        "icon": "rocket",
+        "pages": ["index", "quickstart"]
+      },
+      {
+        "group": "Guides",
+        "icon": "book-open",
+        "pages": ["guides/how-it-works"]
+      },
+      {
+        "group": "API reference",
+        "icon": "code",
+        "openapi": "openapi.json"
+      }
+    ]
+  }
+}
