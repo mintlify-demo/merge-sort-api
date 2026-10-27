@@ -3,16 +3,17 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from main import app, merge_sort
+from main import app, quick_sort
 
 client = TestClient(app)
 
 
-def test_merge_sort_function():
-    assert merge_sort([5, 2, 9, 1]) == [1, 2, 5, 9]
-    assert merge_sort([5, 2, 9, 1], descending=True) == [9, 5, 2, 1]
-    assert merge_sort([]) == []
-    assert merge_sort([7]) == [7]
+def test_quick_sort_function():
+    assert quick_sort([5, 2, 9, 1]) == [1, 2, 5, 9]
+    assert quick_sort([5, 2, 9, 1], descending=True) == [9, 5, 2, 1]
+    assert quick_sort([3, 1, 3, 2, 3]) == [1, 2, 3, 3, 3]
+    assert quick_sort([]) == []
+    assert quick_sort([7]) == [7]
 
 
 def test_sort_ascending_by_default():
@@ -47,12 +48,14 @@ def test_non_numbers_are_rejected():
     assert r.status_code == 422
 
 
-def test_steps_show_each_merge():
+def test_steps_show_each_partition():
     r = client.post("/sort/steps", json={"numbers": [4, 3, 2, 1]})
     body = r.json()
     assert body["result"] == [1, 2, 3, 4]
-    assert [s["merged"] for s in body["steps"]] == [[3, 4], [1, 2], [1, 2, 3, 4]]
-    assert [s["step"] for s in body["steps"]] == [1, 2, 3]
+    first = body["steps"][0]
+    assert first == {"step": 1, "pivot": 2, "before": [1], "equal": [2], "after": [4, 3]}
+    assert [s["pivot"] for s in body["steps"]] == [2, 3]
+    assert [s["step"] for s in body["steps"]] == [1, 2]
 
 
 def test_steps_for_single_item_is_empty():
