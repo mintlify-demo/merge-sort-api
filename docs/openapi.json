@@ -96,6 +96,48 @@
           }
         }
       }
+    },
+    "/sort/stats": {
+      "post": {
+        "tags": [
+          "Sorting"
+        ],
+        "summary": "Compare how long each algorithm takes",
+        "description": "Sort the same list with every algorithm and report how long each took.\n\nHandy for showing that the right algorithm depends on the input. The\n`algorithm` field in the request is ignored here, since every algorithm runs.\nTimings are measured on the server and vary from run to run.",
+        "operationId": "compareSortAlgorithms",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SortRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SortStatsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -108,6 +150,31 @@
           "heap"
         ],
         "title": "Algorithm"
+      },
+      "AlgorithmTiming": {
+        "properties": {
+          "algorithm": {
+            "$ref": "#/components/schemas/Algorithm",
+            "description": "The algorithm that was timed.",
+            "examples": [
+              "quick"
+            ]
+          },
+          "elapsed_ms": {
+            "type": "number",
+            "title": "Elapsed Ms",
+            "description": "How long the sort took, in milliseconds.",
+            "examples": [
+              0.042
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "algorithm",
+          "elapsed_ms"
+        ],
+        "title": "AlgorithmTiming"
       },
       "HTTPValidationError": {
         "properties": {
@@ -295,6 +362,67 @@
           "algorithm"
         ],
         "title": "SortResponse"
+      },
+      "SortStatsResponse": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "How many numbers were sorted.",
+            "examples": [
+              6
+            ]
+          },
+          "order": {
+            "$ref": "#/components/schemas/Order",
+            "description": "The direction that was used.",
+            "examples": [
+              "asc"
+            ]
+          },
+          "result": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Result",
+            "description": "The sorted numbers (identical for every algorithm).",
+            "examples": [
+              [
+                1,
+                2,
+                5,
+                5,
+                6,
+                9
+              ]
+            ]
+          },
+          "timings": {
+            "items": {
+              "$ref": "#/components/schemas/AlgorithmTiming"
+            },
+            "type": "array",
+            "title": "Timings",
+            "description": "One timing per algorithm, fastest first."
+          },
+          "fastest": {
+            "$ref": "#/components/schemas/Algorithm",
+            "description": "The algorithm that finished first on this input.",
+            "examples": [
+              "heap"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "order",
+          "result",
+          "timings",
+          "fastest"
+        ],
+        "title": "SortStatsResponse"
       },
       "SortStepsResponse": {
         "properties": {
