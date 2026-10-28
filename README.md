@@ -39,3 +39,17 @@ A test fails if the committed spec is out of date.
 ## Docs
 
 `docs/` is a complete Mintlify project (`docs.json`, MDX pages, `openapi.json`). The central [`docs`](https://github.com/mintlify-demo/docs) repo publishes it at `/merge-sort-api`. Preview just this folder with `cd docs && mint dev`.
+
+## Hosting
+
+TODO(hosting): the API will be hosted with Mintlify's internal tooling (details TBD). Until then the OpenAPI `servers` list only `http://localhost:8000`. When the hosted URL exists, add it as the first entry of `servers=[...]` in `main.py`, run `make spec`, and rebase the demo stack (see the demo kit README).
+
+`docs/guides/sorting-at-scale.mdx` is gated to the `enterprise` group with `groups` frontmatter.
+
+## Ticket → file map
+
+Context for Mintlify's *Update docs from tickets* automation (seed tickets: `linear-tickets.json` in the demo kit).
+
+| Ticket | What | Where |
+| --- | --- | --- |
+| DEMO-1 | Reject lists over 10,000 numbers with `413` | `main.py` (`SortRequest`, `sort_numbers`), `docs/guides/sorting-at-scale.mdx` |

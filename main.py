@@ -116,7 +116,7 @@ app = FastAPI(
 )
 
 # Allow browsers to call the API from anywhere. The docs' "Try it" playground
-# sends requests straight from your browser to http://localhost:8000, so it needs CORS.
+# sends requests straight from your browser to the API, so it needs CORS.
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 

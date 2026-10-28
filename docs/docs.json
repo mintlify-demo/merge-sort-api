@@ -21,7 +21,8 @@
         "group": "Guides",
         "icon": "book-open",
         "pages": [
-          "guides/how-it-works"
+          "guides/how-it-works",
+          "guides/sorting-at-scale"
         ]
       },
       {
@@ -33,5 +34,14 @@
         }
       }
     ]
+  },
+  "api": {
+    "playground": {
+      "display": "auth",
+      "proxy": false
+    },
+    "examples": {
+      "prefill": true
+    }
   }
 }

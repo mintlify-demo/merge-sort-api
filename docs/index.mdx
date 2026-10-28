@@ -4,7 +4,7 @@ description: Sort numbers with merge sort, and see every merge step along the wa
 icon: arrow-down-wide-short
 ---
 
-The Merge Sort API is a small FastAPI service with two endpoints. One gives you a sorted list. The other shows you **how** the list got sorted.
+{user.name ? <>Welcome back, **{user.name}**.</> : null} The Merge Sort API is a small FastAPI service with two endpoints. One gives you a sorted list. The other shows you **how** the list got sorted.
 
 <Note>
   This API is a demo. Its code lives in the [merge-sort-api repository](https://github.com/mintlify-demo/merge-sort-api), and these docs live in its `docs/` folder.
@@ -26,6 +26,12 @@ The Merge Sort API is a small FastAPI service with two endpoints. One gives you 
     `POST /sort/steps` also returns every merge.
   </Card>
 </CardGroup>
+
+<Visibility for={{ groups: ["enterprise"] }}>
+  <Check>
+    Enterprise readers: see [Sorting at scale](/merge-sort-api/guides/sorting-at-scale) for limits and sizing.
+  </Check>
+</Visibility>
 
 ## At a glance
 
