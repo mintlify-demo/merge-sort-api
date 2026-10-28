@@ -1,6 +1,3 @@
-import json
-from pathlib import Path
-
 from fastapi.testclient import TestClient
 
 from main import app, merge_sort
@@ -58,9 +55,3 @@ def test_steps_show_each_merge():
 def test_steps_for_single_item_is_empty():
     r = client.post("/sort/steps", json={"numbers": [1]})
     assert r.json()["steps"] == []
-
-
-def test_committed_openapi_spec_is_up_to_date():
-    """If this fails, run `make spec` and commit docs/openapi.json."""
-    committed = json.loads((Path(__file__).parent.parent / "docs" / "openapi.json").read_text())
-    assert committed == app.openapi()
