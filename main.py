@@ -7,6 +7,7 @@ Two endpoints:
 Run it:  uvicorn main:app --reload
 """
 import heapq
+import time
 from enum import Enum
 
 from fastapi import FastAPI
@@ -134,6 +135,19 @@ class SortStepsResponse(SortResponse):
     steps: list[PartitionStep] = Field(..., description="Every partition, in the order it happened.")
 
 
+class AlgorithmTiming(BaseModel):
+    algorithm: Algorithm = Field(..., description="The algorithm that was timed.", examples=["quick"])
+    elapsed_ms: float = Field(..., description="How long the sort took, in milliseconds.", examples=[0.042])
+
+
+class SortStatsResponse(BaseModel):
+    count: int = Field(..., description="How many numbers were sorted.", examples=[6])
+    order: Order = Field(..., description="The direction that was used.", examples=["asc"])
+    result: list[float] = Field(..., description="The sorted numbers (identical for every algorithm).", examples=[[1, 2, 5, 5, 6, 9]])
+    timings: list[AlgorithmTiming] = Field(..., description="One timing per algorithm, fastest first.")
+    fastest: Algorithm = Field(..., description="The algorithm that finished first on this input.", examples=["heap"])
+
+
 # --------------------------------------------------------------------------- #
 # The app
 # --------------------------------------------------------------------------- #
@@ -195,4 +209,32 @@ def sort_numbers_with_steps(body: SortRequest) -> SortStepsResponse:
     result = quick_sort(body.numbers, descending=body.order is Order.desc, steps=steps)
     return SortStepsResponse(
         result=result, count=len(result), order=body.order, algorithm=Algorithm.quick, steps=steps
+    )
+
+
+@app.post(
+    "/sort/stats",
+    tags=["Sorting"],
+    operation_id="compareSortAlgorithms",
+    summary="Compare how long each algorithm takes",
+    response_model=SortStatsResponse,
+)
+def compare_sort_algorithms(body: SortRequest) -> SortStatsResponse:
+    """Sort the same list with every algorithm and report how long each took.
+
+    Handy for showing that the right algorithm depends on the input. The
+    `algorithm` field in the request is ignored here, since every algorithm runs.
+    Timings are measured on the server and vary from run to run.
+    """
+    descending = body.order is Order.desc
+    timings: list[AlgorithmTiming] = []
+    result: list[float] = []
+    for name, sort in ALGORITHMS.items():
+        start = time.perf_counter()
+        result = sort(body.numbers, descending=descending)
+        elapsed_ms = (time.perf_counter() - start) * 1000
+        timings.append(AlgorithmTiming(algorithm=Algorithm(name), elapsed_ms=round(elapsed_ms, 4)))
+    timings.sort(key=lambda t: t.elapsed_ms)
+    return SortStatsResponse(
+        count=len(result), order=body.order, result=result, timings=timings, fastest=timings[0].algorithm
     )
