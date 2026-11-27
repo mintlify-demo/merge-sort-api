@@ -1,8 +1,8 @@
-"""Merge Sort API: a tiny FastAPI service that sorts numbers with merge sort.
+"""Sort API: a tiny FastAPI service that sorts numbers with quick sort.
 
 Two endpoints:
   POST /sort        -> sorted list
-  POST /sort/steps  -> sorted list plus every merge step (great for teaching)
+  POST /sort/steps  -> sorted list plus every partition step (great for teaching)
 
 Run it:  uvicorn main:app --reload
 """
@@ -17,42 +17,32 @@ from pydantic import BaseModel, Field
 # --------------------------------------------------------------------------- #
 
 
-def merge(left: list[float], right: list[float], descending: bool = False) -> list[float]:
-    """Merge two already-sorted lists into one sorted list."""
-    merged: list[float] = []
-    i = j = 0
-    while i < len(left) and j < len(right):
-        # Take from the left list when it should come first. Using <= (or >=)
-        # keeps the sort stable: equal values stay in their original order.
-        take_left = left[i] >= right[j] if descending else left[i] <= right[j]
-        if take_left:
-            merged.append(left[i])
-            i += 1
-        else:
-            merged.append(right[j])
-            j += 1
-    # One side ran out, so whatever is left on the other side is already sorted.
-    merged.extend(left[i:])
-    merged.extend(right[j:])
-    return merged
+def quick_sort(numbers: list[float], descending: bool = False, steps: list | None = None) -> list[float]:
+    """Sort with quick sort: pick a pivot, split around it, sort each side.
 
+    1. Pick the middle item as the pivot.
+    2. Partition the rest into items that come before the pivot, items equal
+       to it, and items that come after it.
+    3. Quick sort the "before" and "after" groups, then join everything up.
 
-def merge_sort(numbers: list[float], descending: bool = False, steps: list | None = None) -> list[float]:
-    """Sort with merge sort: split in half, sort each half, merge the halves.
-
-    If a `steps` list is passed in, every merge is recorded in it.
+    If a `steps` list is passed in, every partition is recorded in it.
     """
     if len(numbers) <= 1:  # base case: 0 or 1 items are already sorted
         return list(numbers)
 
-    middle = len(numbers) // 2
-    left = merge_sort(numbers[:middle], descending, steps)
-    right = merge_sort(numbers[middle:], descending, steps)
-    merged = merge(left, right, descending)
+    pivot = numbers[len(numbers) // 2]
+    if descending:
+        before = [n for n in numbers if n > pivot]
+        after = [n for n in numbers if n < pivot]
+    else:
+        before = [n for n in numbers if n < pivot]
+        after = [n for n in numbers if n > pivot]
+    equal = [n for n in numbers if n == pivot]
 
     if steps is not None:
-        steps.append({"step": len(steps) + 1, "left": left, "right": right, "merged": merged})
-    return merged
+        steps.append({"step": len(steps) + 1, "pivot": pivot, "before": before, "equal": equal, "after": after})
+
+    return quick_sort(before, descending, steps) + equal + quick_sort(after, descending, steps)
 
 
 # --------------------------------------------------------------------------- #
@@ -85,15 +75,16 @@ class SortResponse(BaseModel):
     order: Order = Field(..., description="The direction that was used.", examples=["asc"])
 
 
-class MergeStep(BaseModel):
-    step: int = Field(..., description="1-based position of this merge in the run.", examples=[1])
-    left: list[float] = Field(..., description="The sorted left half going into the merge.", examples=[[5]])
-    right: list[float] = Field(..., description="The sorted right half going into the merge.", examples=[[2]])
-    merged: list[float] = Field(..., description="The result of merging left and right.", examples=[[2, 5]])
+class PartitionStep(BaseModel):
+    step: int = Field(..., description="1-based position of this partition in the run.", examples=[1])
+    pivot: float = Field(..., description="The value the list was split around (the middle item).", examples=[9])
+    before: list[float] = Field(..., description="Items that sort before the pivot, still unsorted.", examples=[[5, 2, 1, 5, 6]])
+    equal: list[float] = Field(..., description="Items equal to the pivot.", examples=[[9]])
+    after: list[float] = Field(..., description="Items that sort after the pivot, still unsorted.", examples=[[]])
 
 
 class SortStepsResponse(SortResponse):
-    steps: list[MergeStep] = Field(..., description="Every merge, in the order it happened.")
+    steps: list[PartitionStep] = Field(..., description="Every partition, in the order it happened.")
 
 
 # --------------------------------------------------------------------------- #
@@ -101,13 +92,13 @@ class SortStepsResponse(SortResponse):
 # --------------------------------------------------------------------------- #
 
 app = FastAPI(
-    title="Merge Sort API",
-    version="1.0.0",
-    summary="Sort numbers with merge sort and watch how it works.",
+    title="Sort API",
+    version="2.0.0",
+    summary="Sort numbers with quick sort and watch how it works.",
     description=(
-        "A tiny demo API that sorts a list of numbers using the merge sort algorithm.\n\n"
+        "A tiny demo API that sorts a list of numbers using the quick sort algorithm.\n\n"
         "Use `POST /sort` when you just want the answer, and `POST /sort/steps` when you want "
-        "to see every merge along the way."
+        "to see every partition along the way."
     ),
     servers=[{"url": "http://localhost:8000", "description": "Local development"}],
     openapi_tags=[
@@ -130,10 +121,10 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 def sort_numbers(body: SortRequest) -> SortResponse:
     """Sort a list of numbers in ascending or descending order.
 
-    The sort is **stable** and runs in O(n log n) time. An empty list is valid
-    and returns an empty list.
+    Uses quick sort: O(n log n) on average, O(n^2) in the worst case. An empty
+    list is valid and returns an empty list.
     """
-    result = merge_sort(body.numbers, descending=body.order is Order.desc)
+    result = quick_sort(body.numbers, descending=body.order is Order.desc)
     return SortResponse(result=result, count=len(result), order=body.order)
 
 
@@ -141,15 +132,16 @@ def sort_numbers(body: SortRequest) -> SortResponse:
     "/sort/steps",
     tags=["Sorting"],
     operation_id="sortNumbersWithSteps",
-    summary="Sort numbers and return every merge step",
+    summary="Sort numbers and return every partition step",
     response_model=SortStepsResponse,
 )
 def sort_numbers_with_steps(body: SortRequest) -> SortStepsResponse:
-    """Sort a list of numbers and return each merge as it happened.
+    """Sort a list of numbers and return each partition as it happened.
 
-    Each step shows the two sorted halves (`left` and `right`) and the list they
-    were merged into. The last step's `merged` list is the final result.
+    Each step shows the `pivot` and how the remaining items were split into
+    `before`, `equal`, and `after` groups. Steps are listed depth-first, so the
+    "before" side is fully partitioned before the "after" side starts.
     """
     steps: list = []
-    result = merge_sort(body.numbers, descending=body.order is Order.desc, steps=steps)
+    result = quick_sort(body.numbers, descending=body.order is Order.desc, steps=steps)
     return SortStepsResponse(result=result, count=len(result), order=body.order, steps=steps)
